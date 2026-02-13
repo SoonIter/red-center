@@ -31,5 +31,6 @@ pub enum PlayPhase {
 pub struct MainCamera;
 
 fn setup_camera(mut commands: Commands) {
+    commands.insert_resource(ClearColor(Color::srgb(0.12, 0.12, 0.15)));
     commands.spawn((Camera2d, MainCamera, Msaa::Off));
 }

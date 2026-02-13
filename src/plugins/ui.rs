@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::components::board::*;
 use crate::events::*;
-use crate::plugins::game::{AppState, PlayPhase};
+use crate::plugins::game::AppState;
 use crate::resources::*;
 
 const BG_DARK: Color = Color::srgb(0.12, 0.12, 0.15);
@@ -35,6 +35,7 @@ impl Plugin for UiPlugin {
                     )
                         .run_if(in_state(AppState::Playing)),
                     gameover_button_system.run_if(in_state(AppState::GameOver)),
+                    button_hover_system,
                 ),
             );
     }
@@ -215,11 +216,11 @@ fn setup_game_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             })
             .with_children(|bottom| {
-                // Selection area (placeholder border, tiles render as world-space sprites)
+                // Selection area (transparent so world-space tile sprites show through)
                 bottom.spawn((
                     SelectionArea,
                     Node {
-                        width: Val::Px(500.0),
+                        width: Val::Px(600.0),
                         height: Val::Px(80.0),
                         border: UiRect::all(Val::Px(2.0)),
                         align_items: AlignItems::Center,
@@ -227,19 +228,8 @@ fn setup_game_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ..default()
                     },
                     BorderColor::all(BORDER_COLOR),
-                    BackgroundColor(BG_PANEL),
-                ))
-                .with_children(|sel| {
-                    sel.spawn((
-                        Text::new("待选区"),
-                        TextFont {
-                            font: font.clone(),
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.4, 0.4, 0.45)),
-                    ));
-                });
+                    // No BackgroundColor — transparent so sprites show through
+                ));
 
                 // Button row
                 bottom
@@ -384,7 +374,7 @@ fn build_play_area(parent: &mut ChildSpawnerCommands, font: &Handle<Font>) {
                 ..default()
             },
             BorderColor::all(BORDER_COLOR),
-            BackgroundColor(BG_PANEL),
+            // No BackgroundColor — transparent so world-space board tile sprites show through
         ))
         .with_children(|play| {
             // Label
@@ -398,7 +388,7 @@ fn build_play_area(parent: &mut ChildSpawnerCommands, font: &Handle<Font>) {
                 TextColor(Color::srgb(0.5, 0.5, 0.55)),
             ));
 
-            // 14 empty slots
+            // 14 empty slots (semi-transparent so board sprites can show through)
             play.spawn(Node {
                 flex_direction: FlexDirection::Row,
                 column_gap: Val::Px(4.0),
@@ -417,7 +407,7 @@ fn build_play_area(parent: &mut ChildSpawnerCommands, font: &Handle<Font>) {
                             ..default()
                         },
                         BorderColor::all(Color::srgb(0.3, 0.3, 0.35)),
-                        BackgroundColor(Color::srgb(0.14, 0.14, 0.17)),
+                        BackgroundColor(Color::srgba(0.14, 0.14, 0.17, 0.3)),
                     ));
                 }
             });
@@ -654,6 +644,20 @@ fn gameover_button_system(
         if *interaction == Interaction::Pressed {
             commands.insert_resource(GameState::default());
             next_state.set(AppState::Menu);
+        }
+    }
+}
+
+// ===================== BUTTON HOVER =====================
+
+fn button_hover_system(
+    mut query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<Button>)>,
+) {
+    for (interaction, mut bg) in &mut query {
+        match *interaction {
+            Interaction::Pressed => *bg = BackgroundColor(BG_BUTTON_PRESS),
+            Interaction::Hovered => *bg = BackgroundColor(BG_BUTTON_HOVER),
+            Interaction::None => *bg = BackgroundColor(BG_BUTTON),
         }
     }
 }

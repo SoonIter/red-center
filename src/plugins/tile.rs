@@ -11,9 +11,14 @@ pub const TILE_HEIGHT: f32 = 64.0;
 pub const TILE_GAP: f32 = 4.0;
 
 // Layout constants
-pub const HAND_Y: f32 = -200.0;
-pub const BOARD_Y: f32 = 80.0;
-pub const BOARD_START_X: f32 = -80.0; // offset from center for play area
+// Window: 1280×720, Camera at (0,0) → visible Y range: [-360, 360]
+// UI bottom section: 160px → maps to world Y [-360, -200]
+// Center of bottom section: Y = -280, but selection area is upper part → Y ~ -260
+pub const HAND_Y: f32 = -260.0;
+// UI middle section: roughly Y [-200, 280] (joker area ~70px at top)
+// Play area center: approximately Y = 40
+pub const BOARD_Y: f32 = 40.0;
+pub const BOARD_START_X: f32 = 0.0;
 
 pub struct TilePlugin;
 
@@ -23,6 +28,7 @@ impl Plugin for TilePlugin {
             .init_resource::<PlayerHand>()
             .init_resource::<PlayBoard>()
             .add_systems(OnEnter(AppState::Playing), spawn_tiles)
+            .add_systems(OnExit(AppState::Playing), cleanup_tiles)
             .add_systems(
                 Update,
                 update_tile_positions.run_if(in_state(AppState::Playing)),
@@ -133,4 +139,19 @@ fn update_tile_positions(
 
     // Hide tiles in wall / discarded
     // (wall tiles remain hidden by default since they spawn hidden)
+}
+
+fn cleanup_tiles(
+    mut commands: Commands,
+    tiles: Query<Entity, With<Tile>>,
+    mut wall: ResMut<TileWall>,
+    mut hand: ResMut<PlayerHand>,
+    mut board: ResMut<PlayBoard>,
+) {
+    for entity in &tiles {
+        commands.entity(entity).despawn();
+    }
+    wall.tiles.clear();
+    hand.tiles.clear();
+    board.tiles.clear();
 }
