@@ -100,8 +100,9 @@ fn spawn_tiles(
 }
 
 fn update_tile_positions(
-    hand: Res<PlayerHand>,
-    play_board: Res<PlayBoard>,
+    mut hand: ResMut<PlayerHand>,
+    mut play_board: ResMut<PlayBoard>,
+    tile_q: Query<&Tile>,
     mut query: Query<(
         &mut Transform,
         &mut Visibility,
@@ -109,6 +110,13 @@ fn update_tile_positions(
         Has<TileSelected>,
     )>,
 ) {
+    // Sort hand and board tiles by suit then value
+    hand.tiles
+        .sort_by_key(|e| tile_q.get(*e).map(|t| t.id).ok());
+    play_board
+        .tiles
+        .sort_by_key(|e| tile_q.get(*e).map(|t| t.id).ok());
+
     // Update hand tile positions
     let hand_count = hand.tiles.len();
     let hand_total_width = hand_count as f32 * (TILE_WIDTH + TILE_GAP) - TILE_GAP;

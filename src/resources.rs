@@ -57,7 +57,7 @@ impl Default for GameState {
             current_score: 0,
             base_ante: 10,
             multiplier: 1,
-            hand_size: 8,
+            hand_size: 14,
         }
     }
 }

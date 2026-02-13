@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum TileSuit {
     Man,    // 万
     Pin,    // 筒
@@ -85,6 +85,18 @@ impl TileId {
             31..=33 => TileId { suit: TileSuit::Dragon, value: (index - 30) as u8 },
             _ => unreachable!(),
         }
+    }
+}
+
+impl PartialOrd for TileId {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for TileId {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.suit.cmp(&other.suit).then(self.value.cmp(&other.value))
     }
 }
 
